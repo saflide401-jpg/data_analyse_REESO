@@ -1,0 +1,652 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 3,
+      "metadata": {
+        "id": "OP39NY1mPFLL"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "\n",
+        "# Générer des données de ventes\n",
+        "np.random.seed(42)\n",
+        "\n",
+        "produits = ['Riz', 'Huile', 'Sucre', 'Farine', 'Lait', 'Pain', 'Viande', 'Légumes']\n",
+        "categories = ['Épicerie', 'Épicerie', 'Épicerie', 'Épicerie', 'Laitier', 'Boulangerie', 'Boucherie', 'Frais']\n",
+        "quartiers = ['Gounghin', 'Ouaga 2000', 'Dassasgho', 'Cissin', 'Tampouy']\n",
+        "\n",
+        "n = 500  # 500 transactions\n",
+        "\n",
+        "data = {\n",
+        "    'date': pd.date_range('2024-01-01', periods=n, freq='D')[:n],\n",
+        "    'produit': np.random.choice(produits, n),\n",
+        "    'quantite': np.random.randint(1, 20, n),\n",
+        "    'prix_unitaire': np.random.choice([500, 1500, 600, 400, 800, 200, 3000, 250], n),\n",
+        "    'quartier': np.random.choice(quartiers, n)\n",
+        "}\n",
+        "\n",
+        "df = pd.DataFrame(data)\n",
+        "\n",
+        " # Questions :\n",
+        "# 1. Créer une colonne 'montant_total'\n",
+        "# 2. Ajouter une colonne 'categorie' basée sur le produit\n",
+        "# 3. Calculer le chiffre d'affaires total\n",
+        "# 4. Trouver le produit le plus vendu (en quantité et en montant)\n",
+        "# 5. Analyser les ventes par quartier\n",
+        "# 6. Évolution des ventes par mois\n",
+        "# 7. Top 3 des jours avec le CA le plus élevé\n",
+        ""
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.head(10)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 363
+        },
+        "id": "VPom50Ccf0AS",
+        "outputId": "902362f5-a763-41d5-9b9f-9fbf4ac63b40"
+      },
+      "execution_count": 5,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "        date  produit  quantite  prix_unitaire    quartier\n",
+              "0 2024-01-01   Viande         1           1500    Gounghin\n",
+              "1 2024-01-02   Farine         3            200  Ouaga 2000\n",
+              "2 2024-01-03     Lait        18            400    Gounghin\n",
+              "3 2024-01-04   Viande        10            600     Tampouy\n",
+              "4 2024-01-05    Sucre         3            400    Gounghin\n",
+              "5 2024-01-06  Légumes         8            500  Ouaga 2000\n",
+              "6 2024-01-07     Lait        14            400      Cissin\n",
+              "7 2024-01-08     Lait        18            500     Tampouy\n",
+              "8 2024-01-09   Viande        15            400  Ouaga 2000\n",
+              "9 2024-01-10    Huile         2           3000     Tampouy"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-0ca126d5-aee6-4afb-b860-561b4feedccc\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>date</th>\n",
+              "      <th>produit</th>\n",
+              "      <th>quantite</th>\n",
+              "      <th>prix_unitaire</th>\n",
+              "      <th>quartier</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>0</th>\n",
+              "      <td>2024-01-01</td>\n",
+              "      <td>Viande</td>\n",
+              "      <td>1</td>\n",
+              "      <td>1500</td>\n",
+              "      <td>Gounghin</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>1</th>\n",
+              "      <td>2024-01-02</td>\n",
+              "      <td>Farine</td>\n",
+              "      <td>3</td>\n",
+              "      <td>200</td>\n",
+              "      <td>Ouaga 2000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>2</th>\n",
+              "      <td>2024-01-03</td>\n",
+              "      <td>Lait</td>\n",
+              "      <td>18</td>\n",
+              "      <td>400</td>\n",
+              "      <td>Gounghin</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>3</th>\n",
+              "      <td>2024-01-04</td>\n",
+              "      <td>Viande</td>\n",
+              "      <td>10</td>\n",
+              "      <td>600</td>\n",
+              "      <td>Tampouy</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>4</th>\n",
+              "      <td>2024-01-05</td>\n",
+              "      <td>Sucre</td>\n",
+              "      <td>3</td>\n",
+              "      <td>400</td>\n",
+              "      <td>Gounghin</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>5</th>\n",
+              "      <td>2024-01-06</td>\n",
+              "      <td>Légumes</td>\n",
+              "      <td>8</td>\n",
+              "      <td>500</td>\n",
+              "      <td>Ouaga 2000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>6</th>\n",
+              "      <td>2024-01-07</td>\n",
+              "      <td>Lait</td>\n",
+              "      <td>14</td>\n",
+              "      <td>400</td>\n",
+              "      <td>Cissin</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>7</th>\n",
+              "      <td>2024-01-08</td>\n",
+              "      <td>Lait</td>\n",
+              "      <td>18</td>\n",
+              "      <td>500</td>\n",
+              "      <td>Tampouy</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>8</th>\n",
+              "      <td>2024-01-09</td>\n",
+              "      <td>Viande</td>\n",
+              "      <td>15</td>\n",
+              "      <td>400</td>\n",
+              "      <td>Ouaga 2000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>9</th>\n",
+              "      <td>2024-01-10</td>\n",
+              "      <td>Huile</td>\n",
+              "      <td>2</td>\n",
+              "      <td>3000</td>\n",
+              "      <td>Tampouy</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-0ca126d5-aee6-4afb-b860-561b4feedccc')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-0ca126d5-aee6-4afb-b860-561b4feedccc button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-0ca126d5-aee6-4afb-b860-561b4feedccc');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "variable_name": "df",
+              "summary": "{\n  \"name\": \"df\",\n  \"rows\": 500,\n  \"fields\": [\n    {\n      \"column\": \"date\",\n      \"properties\": {\n        \"dtype\": \"date\",\n        \"min\": \"2024-01-01 00:00:00\",\n        \"max\": \"2025-05-14 00:00:00\",\n        \"num_unique_values\": 500,\n        \"samples\": [\n          \"2024-12-27 00:00:00\",\n          \"2024-03-14 00:00:00\",\n          \"2025-01-09 00:00:00\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"produit\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 8,\n        \"samples\": [\n          \"Farine\",\n          \"Huile\",\n          \"Viande\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"quantite\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 5,\n        \"min\": 1,\n        \"max\": 19,\n        \"num_unique_values\": 19,\n        \"samples\": [\n          1,\n          14,\n          16\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"prix_unitaire\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 901,\n        \"min\": 200,\n        \"max\": 3000,\n        \"num_unique_values\": 8,\n        \"samples\": [\n          200,\n          3000,\n          1500\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"quartier\",\n      \"properties\": {\n        \"dtype\": \"category\",\n        \"num_unique_values\": 5,\n        \"samples\": [\n          \"Ouaga 2000\",\n          \"Dassasgho\",\n          \"Tampouy\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 5
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.info()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "K_HysVRFhhUy",
+        "outputId": "e7f92654-015e-4756-b11f-fa921cc13380"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "<class 'pandas.core.frame.DataFrame'>\n",
+            "RangeIndex: 500 entries, 0 to 499\n",
+            "Data columns (total 5 columns):\n",
+            " #   Column         Non-Null Count  Dtype         \n",
+            "---  ------         --------------  -----         \n",
+            " 0   date           500 non-null    datetime64[ns]\n",
+            " 1   produit        500 non-null    object        \n",
+            " 2   quantite       500 non-null    int64         \n",
+            " 3   prix_unitaire  500 non-null    int64         \n",
+            " 4   quartier       500 non-null    object        \n",
+            "dtypes: datetime64[ns](1), int64(2), object(2)\n",
+            "memory usage: 19.7+ KB\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.describe()"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 300
+        },
+        "id": "c1nALjy8h3jL",
+        "outputId": "675a1950-a2a6-4ca9-8353-22129ab19b5f"
+      },
+      "execution_count": 8,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "                      date    quantite  prix_unitaire\n",
+              "count                  500  500.000000     500.000000\n",
+              "mean   2024-09-06 12:00:00   10.048000     921.900000\n",
+              "min    2024-01-01 00:00:00    1.000000     200.000000\n",
+              "25%    2024-05-04 18:00:00    5.000000     250.000000\n",
+              "50%    2024-09-06 12:00:00   10.000000     600.000000\n",
+              "75%    2025-01-09 06:00:00   15.000000    1500.000000\n",
+              "max    2025-05-14 00:00:00   19.000000    3000.000000\n",
+              "std                    NaN    5.651688     901.187921"
+            ],
+            "text/html": [
+              "\n",
+              "  <div id=\"df-0e1d910d-c52c-422a-bdca-7e22afcffb2f\" class=\"colab-df-container\">\n",
+              "    <div>\n",
+              "<style scoped>\n",
+              "    .dataframe tbody tr th:only-of-type {\n",
+              "        vertical-align: middle;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe tbody tr th {\n",
+              "        vertical-align: top;\n",
+              "    }\n",
+              "\n",
+              "    .dataframe thead th {\n",
+              "        text-align: right;\n",
+              "    }\n",
+              "</style>\n",
+              "<table border=\"1\" class=\"dataframe\">\n",
+              "  <thead>\n",
+              "    <tr style=\"text-align: right;\">\n",
+              "      <th></th>\n",
+              "      <th>date</th>\n",
+              "      <th>quantite</th>\n",
+              "      <th>prix_unitaire</th>\n",
+              "    </tr>\n",
+              "  </thead>\n",
+              "  <tbody>\n",
+              "    <tr>\n",
+              "      <th>count</th>\n",
+              "      <td>500</td>\n",
+              "      <td>500.000000</td>\n",
+              "      <td>500.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>mean</th>\n",
+              "      <td>2024-09-06 12:00:00</td>\n",
+              "      <td>10.048000</td>\n",
+              "      <td>921.900000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>min</th>\n",
+              "      <td>2024-01-01 00:00:00</td>\n",
+              "      <td>1.000000</td>\n",
+              "      <td>200.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>25%</th>\n",
+              "      <td>2024-05-04 18:00:00</td>\n",
+              "      <td>5.000000</td>\n",
+              "      <td>250.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>50%</th>\n",
+              "      <td>2024-09-06 12:00:00</td>\n",
+              "      <td>10.000000</td>\n",
+              "      <td>600.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>75%</th>\n",
+              "      <td>2025-01-09 06:00:00</td>\n",
+              "      <td>15.000000</td>\n",
+              "      <td>1500.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>max</th>\n",
+              "      <td>2025-05-14 00:00:00</td>\n",
+              "      <td>19.000000</td>\n",
+              "      <td>3000.000000</td>\n",
+              "    </tr>\n",
+              "    <tr>\n",
+              "      <th>std</th>\n",
+              "      <td>NaN</td>\n",
+              "      <td>5.651688</td>\n",
+              "      <td>901.187921</td>\n",
+              "    </tr>\n",
+              "  </tbody>\n",
+              "</table>\n",
+              "</div>\n",
+              "    <div class=\"colab-df-buttons\">\n",
+              "\n",
+              "  <div class=\"colab-df-container\">\n",
+              "    <button class=\"colab-df-convert\" onclick=\"convertToInteractive('df-0e1d910d-c52c-422a-bdca-7e22afcffb2f')\"\n",
+              "            title=\"Convert this dataframe to an interactive table.\"\n",
+              "            style=\"display:none;\">\n",
+              "\n",
+              "  <svg xmlns=\"http://www.w3.org/2000/svg\" height=\"24px\" viewBox=\"0 -960 960 960\">\n",
+              "    <path d=\"M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z\"/>\n",
+              "  </svg>\n",
+              "    </button>\n",
+              "\n",
+              "  <style>\n",
+              "    .colab-df-container {\n",
+              "      display:flex;\n",
+              "      gap: 12px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert {\n",
+              "      background-color: #E8F0FE;\n",
+              "      border: none;\n",
+              "      border-radius: 50%;\n",
+              "      cursor: pointer;\n",
+              "      display: none;\n",
+              "      fill: #1967D2;\n",
+              "      height: 32px;\n",
+              "      padding: 0 0 0 0;\n",
+              "      width: 32px;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-convert:hover {\n",
+              "      background-color: #E2EBFA;\n",
+              "      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);\n",
+              "      fill: #174EA6;\n",
+              "    }\n",
+              "\n",
+              "    .colab-df-buttons div {\n",
+              "      margin-bottom: 4px;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert {\n",
+              "      background-color: #3B4455;\n",
+              "      fill: #D2E3FC;\n",
+              "    }\n",
+              "\n",
+              "    [theme=dark] .colab-df-convert:hover {\n",
+              "      background-color: #434B5C;\n",
+              "      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);\n",
+              "      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));\n",
+              "      fill: #FFFFFF;\n",
+              "    }\n",
+              "  </style>\n",
+              "\n",
+              "    <script>\n",
+              "      const buttonEl =\n",
+              "        document.querySelector('#df-0e1d910d-c52c-422a-bdca-7e22afcffb2f button.colab-df-convert');\n",
+              "      buttonEl.style.display =\n",
+              "        google.colab.kernel.accessAllowed ? 'block' : 'none';\n",
+              "\n",
+              "      async function convertToInteractive(key) {\n",
+              "        const element = document.querySelector('#df-0e1d910d-c52c-422a-bdca-7e22afcffb2f');\n",
+              "        const dataTable =\n",
+              "          await google.colab.kernel.invokeFunction('convertToInteractive',\n",
+              "                                                    [key], {});\n",
+              "        if (!dataTable) return;\n",
+              "\n",
+              "        const docLinkHtml = 'Like what you see? Visit the ' +\n",
+              "          '<a target=\"_blank\" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'\n",
+              "          + ' to learn more about interactive tables.';\n",
+              "        element.innerHTML = '';\n",
+              "        dataTable['output_type'] = 'display_data';\n",
+              "        await google.colab.output.renderOutput(dataTable, element);\n",
+              "        const docLink = document.createElement('div');\n",
+              "        docLink.innerHTML = docLinkHtml;\n",
+              "        element.appendChild(docLink);\n",
+              "      }\n",
+              "    </script>\n",
+              "  </div>\n",
+              "\n",
+              "\n",
+              "    </div>\n",
+              "  </div>\n"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "dataframe",
+              "summary": "{\n  \"name\": \"df\",\n  \"rows\": 8,\n  \"fields\": [\n    {\n      \"column\": \"date\",\n      \"properties\": {\n        \"dtype\": \"date\",\n        \"min\": \"1970-01-01 00:00:00.000000500\",\n        \"max\": \"2025-05-14 00:00:00\",\n        \"num_unique_values\": 6,\n        \"samples\": [\n          \"500\",\n          \"2024-09-06 12:00:00\",\n          \"2025-05-14 00:00:00\"\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"quantite\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 173.55233329042758,\n        \"min\": 1.0,\n        \"max\": 500.0,\n        \"num_unique_values\": 8,\n        \"samples\": [\n          10.048,\n          15.0,\n          500.0\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    },\n    {\n      \"column\": \"prix_unitaire\",\n      \"properties\": {\n        \"dtype\": \"number\",\n        \"std\": 916.2306402122771,\n        \"min\": 200.0,\n        \"max\": 3000.0,\n        \"num_unique_values\": 8,\n        \"samples\": [\n          921.9,\n          1500.0,\n          500.0\n        ],\n        \"semantic_type\": \"\",\n        \"description\": \"\"\n      }\n    }\n  ]\n}"
+            }
+          },
+          "metadata": {},
+          "execution_count": 8
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Ajout d'une coloone Montant Total\n",
+        "df['MT']=df['quantite']*df['prix_unitaire']\n",
+        "print(df.head(5))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "collapsed": true,
+        "id": "3TFG9l1ch5NF",
+        "outputId": "d4a083fa-8fb1-4cdf-e09a-1c41effd3f93"
+      },
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "        date produit  quantite  prix_unitaire    quartier    MT\n",
+            "0 2024-01-01  Viande         1           1500    Gounghin  1500\n",
+            "1 2024-01-02  Farine         3            200  Ouaga 2000   600\n",
+            "2 2024-01-03    Lait        18            400    Gounghin  7200\n",
+            "3 2024-01-04  Viande        10            600     Tampouy  6000\n",
+            "4 2024-01-05   Sucre         3            400    Gounghin  1200\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#Ajouter une colonne 'categorie' basée sur le produit\n",
+        "categories = {\n",
+        "    'Riz': 'Épicerie',\n",
+        "    'Huile': 'Épicerie',\n",
+        "    'Sucre': 'Épicerie',\n",
+        "    'Farine': 'Épicerie',\n",
+        "    'Lait': 'Laitier',\n",
+        "    'Pain': 'Boulangerie',\n",
+        "    'Viande': 'Boucherie',\n",
+        "    'Légumes': 'Frais'\n",
+        "}\n",
+        "df['categorie'] = df['produit'].map(categories)\n",
+        "print(df.head(5))"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "MWkcKj0vkGys",
+        "outputId": "0ef46b78-ca3a-427e-b840-b5af04b4642b"
+      },
+      "execution_count": 10,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "        date produit  quantite  prix_unitaire    quartier    MT  categorie\n",
+            "0 2024-01-01  Viande         1           1500    Gounghin  1500  Boucherie\n",
+            "1 2024-01-02  Farine         3            200  Ouaga 2000   600   Épicerie\n",
+            "2 2024-01-03    Lait        18            400    Gounghin  7200    Laitier\n",
+            "3 2024-01-04  Viande        10            600     Tampouy  6000  Boucherie\n",
+            "4 2024-01-05   Sucre         3            400    Gounghin  1200   Épicerie\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#3. Calculer le chiffre d'affaires total\n",
+        "CA = df['MT'].sum()\n",
+        "print(CA)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "8C1AXjTTnAXm",
+        "outputId": "3df74695-8040-4be6-e583-0f71400809ee"
+      },
+      "execution_count": 11,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "4735400\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#4. Trouver le produit le plus vendu (en quantité et en montant)\n",
+        "Produit_Montant=df['MT'].sort_values(ascending=False).head(1)\n",
+        "print(Produit_Montant)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "NWdGTGfJnl1w",
+        "outputId": "dceb34d2-13a0-4904-e40a-15f3aeae80d6"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "222    57000\n",
+            "Name: MT, dtype: int64\n"
+          ]
+        }
+      ]
+    }
+  ]
+}
